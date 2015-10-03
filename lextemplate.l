@@ -20,6 +20,31 @@ char buf[MAX_LINE_LENG];
           linenum++;
           buf[0] = '\0';
         }
+/*開始自己胡搞瞎搞*/
+/*Keywords*/
+	"array"		{token(KWarray);}
+	"begin"		{token(KWbegin);}
+	"boolean"	{token(KWboolean);}
+	"def"		{token(KWdef);}
+	"do"		{token(KWdo);}
+	"else"		{token(KWelse);}
+	"end"		{token(KWend);}
+	"false"		{token(KWfalse);}
+	"for"		{token(KWfor);}
+	"integer"	{token(KWinteger);}
+	"if"		{token(KWif);}
+	"of"		{token(KWof);}
+	"print"		{token(KWprint);}
+	"read"		{token(KWread);}
+	"real"		{token(KWreal);}
+	"string"	{token(KWstring);}
+	"then"		{token(KWthen);}
+	"to"		{token(KWto);}
+	"true"		{token(KWtrue);}
+	"return"	{token(KWreturn);}
+	"var"		{token(KWvar);}
+	"while"		{token(KWwhile);}
+/*開始自己胡搞瞎搞*/		
 %%
 int main( int argc, char **argv )
 {
