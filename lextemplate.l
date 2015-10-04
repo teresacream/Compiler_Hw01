@@ -17,6 +17,8 @@ int linenum = 1;
 char buf[MAX_LINE_LENG];
 %}
 
+%Start STR CMT_A CMT_B PSDCMT
+
 %%
 "("     {token('(');}
 \n      {
