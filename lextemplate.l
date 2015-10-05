@@ -1,5 +1,4 @@
 %{
-#include <string>	
 #define LIST               strcat(buf, yytext)
 #define token(t)           {LIST; if (Opt_T) printf("<%s>\n", #t);}
 #define tokenInteger(t, i) {LIST; if (Opt_T) printf("<%s:%d>\n", #t, i);}
@@ -8,7 +7,7 @@
 /*開始自己胡搞瞎搞*/
 #define tokenFloat(t, f)   		 {LIST; if (Opt_T) printf("<%s:%f>\n", #t, f);}
 #define tokenScientific(t, sc)   {LIST; if (Opt_T) printf("<%s:%s>\n", #t, sc);}
-string Strbuf;	/*用來存字串內容的*/
+char Strbuf;	/*用來存字串內容的*//*你為什麼不吃我的string.h？？*/
 /*開始自己胡搞瞎搞*/
 
 int Opt_S = 1;
@@ -17,43 +16,54 @@ int linenum = 1;
 char buf[MAX_LINE_LENG];
 %}
 
+STRCNT	[^(\n")]*
+WT		[\t	]+
+
 %Start STR CMT_A CMT_B PSDCMT
 
 %%
-"("     {token('(');}
-\n      {
-          LIST;
-          if (Opt_S)
-			printf("%d:%s\n", linenum, buf);
-          linenum++;
-          buf[0] = '\0';
-        }
-/*開始自己胡搞瞎搞*/
-/*Delimiters*/
-	","			{token(',');}
-	";"			{token(';');}
-	":"			{token(':');}
-	")"			{token(')');}
-	"["			{token('[');}
-	"]"			{token(']');}
+	"\""			{	/*String開始*/
+						LIST;
+						BEGIN STR;
+					}
+	<STR>{STRCNT}	{	/*String內容*/
+						LIST;
+						strcat(Strbuf, yytext);
+					}
+	<STR>"\""   	{	/*String結束*/
+						LIST;
+						tokenString(string, Strbuf);
+						Strbuf[0] = '\0';
+						BEGIN INITIAL;
+					}
 
-/*Arithmetic, Relational, and Logical Operators*/
-	"+"			{token('+');}
-	"-"			{token('-');}
-	"*"			{token('*');}
+"("     {token('(');}
+
+
+	","			{token(',');}
+	";"			{token(;);}
+	":"			{token(:);}
+	")"			{token(')');}
+	"["			{token([);}
+	"]"			{token(]);}
+
+
+	"+"			{token(+);}
+	"-"			{token(-);}
+	"*"			{token(*);}
 	"/"			{token('/');}
 	"mod"		{token(mod);}
 	":="		{token(:=);}
-	"<"			{token('<');}
-	">"			{token('>');}
+	"<"			{token(<);}
+	">"			{token(>);}
 	"<="		{token(<=);}
 	">="		{token(>=);}
-	"="			{token('=');}
+	"="			{token(=);}
 	"and"		{token(and);}
 	"or"		{token(or);}
 	"not"		{token(not);}
 	
-/*Keywords*/
+
 	"array"		{token(KWarray);}
 	"begin"		{token(KWbegin);}
 	"boolean"	{token(KWboolean);}
@@ -77,40 +87,23 @@ char buf[MAX_LINE_LENG];
 	"var"		{token(KWvar);}
 	"while"		{token(KWwhile);}
 
-/*Identifiers*/
+
 	[a-zA-Z_]([a-zA-Z_]|[0-9])*	{tokenString(identifier, yytext);}
 	
-/*Integer Constants*/	
+	
 	0[0-7]+				{tokenInteger(integer, yytext);}
 	0|([1-9][0-9]*)		{tokenInteger(integer, yytext);}
 
-/*Floating-Point Constants*/
+
 	(0|[1-9]*).[0-9]*	{tokenFloat(float, yytext);}
 
-/*Scientific Notations 1.23E4, 1.23E+4, 1.23E-4, 123E4*/
-	(((0|[1-9]*).[0-9]*)|([1-9]*))[Ee][+-](0|[1-9][0-9]*)	{tokenScientific("scientific", yytext);}
 
-/*String*/
-	"\""			{	/*String開始*/
-						LIST;
-						BEGIN STR;
-					}
-	<STR>"\"\"" 	{	/*兩個引號*/
-						LIST;
-						Strbuf = Strbuf + "\"";
-					}
-	<STR> [^(\n")]*	{	/*String內容*/
-						LIST;
-						Strbuf = Strbuf + yytext;
-					}
-	<STR>"\""   	{	/*String結束*/
-						LIST;
-						tokenString(string, Strbuf);
-						Strbuf.clear();
-						BEGIN INITIAL;
-					}
+	(((0|[1-9]*).[0-9]*)|(0|([1-9][0-9]*)))[Ee][+-](0|[1-9][0-9]*)	{tokenScientific("scientific", yytext);}
+
+	
+	
 				
-/*Comment*/
+
 	"//"			{	/*Comment_A(雙斜線Comment)開始*/
 						LIST;
 						BEGIN CMT_A;
@@ -118,7 +111,7 @@ char buf[MAX_LINE_LENG];
 	<CMT_A>[^(\n)]*	{	/*Comment_A內容*/
 						LIST;
 					}
-	<CMT_A>\n		{	/*Comment_A結束*/
+	<CMT_A>"\n"		{	/*Comment_A結束*/
 						LIST;
 						if (Opt_S)
 							printf("%d:%s\n", linenum, buf);
@@ -131,7 +124,7 @@ char buf[MAX_LINE_LENG];
 						LIST;
 						BEGIN CMT_B;
 					}
-	<CMT_B>\n		{	/*跟Initial狀態的換行一樣*/
+	<CMT_B>"\n"		{	/*跟Initial狀態的換行一樣*/
 						LIST;
 						if (Opt_S)
 							printf("%d:%s\n", linenum, buf);
@@ -142,10 +135,10 @@ char buf[MAX_LINE_LENG];
 						LIST;
 						BEGIN INITIAL;
 					}
-/*Whitespace or Tab*/
-	[\t	]+		{LIST;}
+
+	{WT}			{LIST;}
 	
-/*Pseudocomments*/
+
 	"//&"						{	/*Pseudocomments開始*/
 									LIST;
 									BEGIN PSDCMT;
@@ -174,9 +167,15 @@ char buf[MAX_LINE_LENG];
 								Opt_T = 0;
 								BEGIN INITIAL;
 								}
-
-/*開始自己胡搞瞎搞*/		
+	\n  {
+          LIST;
+          if (Opt_S)
+			printf("%d:%s\n", linenum, buf);
+          linenum++;
+          buf[0] = '\0';
+        }
 %%
+
 int main( int argc, char **argv )
 {
   if( argc != 2 ) {
